@@ -108,7 +108,49 @@ function updateInstructionUI(instr) {
 function startNavigation(route, map) {
   let currentInstructionIndex = 0;
 
+  if (isMobile()) {
   navigator.geolocation.watchPosition(pos => {
+    handlePosition(pos);
+  }, err => console.error(err), {
+    enableHighAccuracy: true
+  });
+} else {
+  // SIMULAZIONE SU PC
+  setInterval(() => {
+    const pos = getSimulatedPosition();
+    handlePosition(pos);
+  }, 2000);
+}
+
+  function handlePosition(pos) {
+  const user = [pos.coords.longitude, pos.coords.latitude];
+
+  // Marker utente
+  if (!window.userMarker) {
+    window.userMarker = new maplibregl.Marker({ color: "red" })
+      .setLngLat(user)
+      .addTo(map);
+  } else {
+    window.userMarker.setLngLat(user);
+  }
+
+  // Prossima istruzione
+  const instr = route.instructions[currentInstructionIndex];
+  updateInstructionUI(instr);
+
+  // Distanza dalla svolta
+  const dist = turf.distance(
+    turf.point(user),
+    turf.point([instr.point.lon, instr.point.lat]),
+    { units: "meters" }
+  );
+
+  // Passa alla prossima istruzione
+  if (dist < 30 && currentInstructionIndex < route.instructions.length - 1) {
+    currentInstructionIndex++;
+  }
+}
+
     const user = [pos.coords.longitude, pos.coords.latitude];
 
     // Marker utente
