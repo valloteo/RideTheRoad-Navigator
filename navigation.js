@@ -6,7 +6,7 @@
 function getSimulatedPosition() {
   return {
     coords: {
-      latitude: 45.4642,   // Milano centro
+      latitude: 45.4642,
       longitude: 9.19
     }
   };
@@ -21,6 +21,15 @@ let currentInstructionIndex = 0;
 let userMarker = null;
 
 // ===============================
+// SEMPLIFICAZIONE TRACCIA GPX
+// ===============================
+function simplifyGPX(coords, tolerance = 0.0008) {
+  const line = turf.lineString(coords.map(p => [p.lon, p.lat]));
+  const simplified = turf.simplify(line, { tolerance, highQuality: false });
+  return simplified.geometry.coordinates;
+}
+
+// ===============================
 // CALCOLO DEL PERCORSO (GraphHopper)
 // ===============================
 async function calculateRoute(gpxCoords) {
@@ -31,14 +40,14 @@ async function calculateRoute(gpxCoords) {
 
   const apiKey = "554f1638-d277-4945-94ab-10d6fac55139";
 
-  // Passiamo TUTTI i punti del GPX
-  const points = gpxCoords.map(p => [p.lon, p.lat]);
+  // Semplifichiamo la traccia (da 2000 punti → ~40)
+  const simplified = simplifyGPX(gpxCoords);
 
   const url = `https://graphhopper.com/api/1/route?key=${apiKey}`;
 
   const body = {
     profile: "motorcycle",
-    points: points,
+    points: simplified,
     instructions: true,
     calc_points: true
   };
@@ -77,7 +86,6 @@ function startNavigation() {
 
   currentInstructionIndex = 0;
 
-  // GPS reale su smartphone
   if (isMobile()) {
     navigator.geolocation.watchPosition(
       pos => handlePosition(pos),
@@ -85,7 +93,6 @@ function startNavigation() {
       { enableHighAccuracy: true }
     );
   } else {
-    // SIMULAZIONE SU PC
     setInterval(() => {
       const pos = getSimulatedPosition();
       handlePosition(pos);
@@ -99,7 +106,6 @@ function startNavigation() {
 function handlePosition(pos) {
   const user = [pos.coords.longitude, pos.coords.latitude];
 
-  // Marker utente
   if (!userMarker) {
     userMarker = new maplibregl.Marker({ color: "red" })
       .setLngLat(user)
@@ -108,18 +114,15 @@ function handlePosition(pos) {
     userMarker.setLngLat(user);
   }
 
-  // Istruzione corrente
   const instr = route.instructions[currentInstructionIndex];
   updateInstructionUI(instr);
 
-  // Distanza dalla prossima svolta
   const dist = turf.distance(
     turf.point(user),
     turf.point([instr.point.lon, instr.point.lat]),
     { units: "meters" }
   );
 
-  // Passa alla prossima istruzione
   if (dist < 30 && currentInstructionIndex < route.instructions.length - 1) {
     currentInstructionIndex++;
   }
