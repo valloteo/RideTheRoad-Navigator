@@ -1,43 +1,49 @@
+// ===============================
+// GPX PARSER + SEMPLIFICAZIONE
+// ===============================
+
+// Legge tutti i punti della traccia (migliaia di punti)
+function parseTrack(xml) {
+  const trkpts = [...xml.getElementsByTagName("trkpt")];
+  return trkpts.map(p => ({
+    lat: parseFloat(p.getAttribute("lat")),
+    lon: parseFloat(p.getAttribute("lon"))
+  }));
+}
+
+// Semplifica la traccia per GraphHopper (40–60 punti)
+function simplifyTrack(coords, tolerance = 0.0008) {
+  if (!coords || coords.length === 0) return [];
+
+  const line = turf.lineString(coords.map(p => [p.lon, p.lat]));
+
+  const simplified = turf.simplify(line, {
+    tolerance,
+    highQuality: false
+  });
+
+  return simplified.geometry.coordinates.map(c => ({
+    lon: c[0],
+    lat: c[1]
+  }));
+}
+
+// Parser principale GPX
 function parseGPX(xmlText) {
   const parser = new DOMParser();
-  const xml = parser.parseFromString(xmlText, "text/xml");
+  const xml = parser.parseFromString(xmlText, "application/xml");
 
-  const trkpts = [...xml.getElementsByTagName("trkpt")];
-  const coords = trkpts.map(pt => [
-    parseFloat(pt.getAttribute("lon")),
-    parseFloat(pt.getAttribute("lat"))
-  ]);
+  // Traccia completa (per disegnare la linea)
+  const fullTrack = parseTrack(xml);
 
-  return coords;
+  // Traccia semplificata (per GraphHopper)
+  const simplified = simplifyTrack(fullTrack);
+
+  return {
+    fullTrack,   // migliaia di punti → per la mappa
+    simplified   // 40–60 punti → per GraphHopper
+  };
 }
 
-function drawTrack(coords, map) {
-  if (map.getSource("gpx")) {
-    map.getSource("gpx").setData({
-      type: "Feature",
-      geometry: { type: "LineString", coordinates: coords }
-    });
-  } else {
-    map.addSource("gpx", {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        geometry: { type: "LineString", coordinates: coords }
-      }
-    });
-
-    map.addLayer({
-      id: "gpx-line",
-      type: "line",
-      source: "gpx",
-      paint: { "line-color": "#1E90FF", "line-width": 4 }
-    });
-  }
-
-  const bounds = coords.reduce(
-    (b, c) => b.extend(c),
-    new maplibregl.LngLatBounds(coords[0], coords[0])
-  );
-
-  map.fitBounds(bounds, { padding: 40 });
-}
+// Esportiamo la funzione
+window.parseGPX = parseGPX;
