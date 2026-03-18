@@ -29,10 +29,8 @@ function simplifyTrack(coords, tolerance = 0.0008) {
 }
 
 // Parser principale GPX
-function parseGPX(gpxText) {
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(gpxText, "application/xml");
-
+// ⚠️ IMPORTANTE: questa versione accetta XML già parsato
+function parseGPX(xml) {
   // Traccia completa (per disegnare la linea)
   const fullTrack = parseTrack(xml);
 
