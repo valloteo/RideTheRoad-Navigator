@@ -1,4 +1,21 @@
 // ===============================
+// SIMULAZIONE GPS SU PC
+// ===============================
+function getSimulatedPosition() {
+  // Punto di partenza finto (Milano)
+  return {
+    coords: {
+      latitude: 45.4642,
+      longitude: 9.19
+    }
+  };
+}
+
+function isMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// ===============================
 //  NAVIGAZIONE TURN-BY-TURN
 // ===============================
 
