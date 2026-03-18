@@ -1,0 +1,9 @@
+{
+  "name": "RideTheRoad",
+  "short_name": "RideTheRoad",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1E90FF",
+  "icons": []
+}
