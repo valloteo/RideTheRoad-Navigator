@@ -1,11 +1,12 @@
 // ===============================
-// SIMULAZIONE GPS SU PC
+// NAVIGAZIONE TURN-BY-TURN
 // ===============================
+
+// SIMULAZIONE GPS SU PC
 function getSimulatedPosition() {
-  // Punto di partenza finto (Milano)
   return {
     coords: {
-      latitude: 45.4642,
+      latitude: 45.4642,   // Milano centro
       longitude: 9.19
     }
   };
@@ -15,11 +16,13 @@ function isMobile() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
-// ===============================
-//  NAVIGAZIONE TURN-BY-TURN
-// ===============================
+let route = null;
+let currentInstructionIndex = 0;
+let userMarker = null;
 
-// 1. Calcolo percorso con GraphHopper
+// ===============================
+// CALCOLO DEL PERCORSO (GraphHopper)
+// ===============================
 async function calculateRoute(gpxCoords) {
   if (!gpxCoords || gpxCoords.length === 0) {
     console.error("Nessuna coordinata GPX trovata");
@@ -28,17 +31,14 @@ async function calculateRoute(gpxCoords) {
 
   const apiKey = "554f1638-d277-4945-94ab-10d6fac55139";
 
-  const start = gpxCoords[0];
-  const end = gpxCoords[gpxCoords.length - 1];
+  // Passiamo TUTTI i punti del GPX
+  const points = gpxCoords.map(p => [p.lon, p.lat]);
 
   const url = `https://graphhopper.com/api/1/route?key=${apiKey}`;
 
   const body = {
     profile: "motorcycle",
-    points: [
-      [start.lon, start.lat],
-      [end.lon, end.lat]
-    ],
+    points: points,
     instructions: true,
     calc_points: true
   };
@@ -66,79 +66,53 @@ async function calculateRoute(gpxCoords) {
   };
 }
 
-
-
 // ===============================
-// 2. Riepilogo percorso (km, tempo, arrivo)
+// AVVIO NAVIGAZIONE
 // ===============================
-function updateSummary(route) {
-  const km = (route.distance / 1000).toFixed(1);
-  const minutes = Math.round(route.time / 60000);
-
-  const arrival = new Date(Date.now() + route.time);
-  const hh = arrival.getHours().toString().padStart(2, "0");
-  const mm = arrival.getMinutes().toString().padStart(2, "0");
-
-  const el = document.getElementById("summary");
-  if (el) {
-    el.textContent = `${km} km — ${minutes} min — Arrivo ${hh}:${mm}`;
+function startNavigation() {
+  if (!route) {
+    console.error("Nessun percorso caricato");
+    return;
   }
-}
 
+  currentInstructionIndex = 0;
 
-
-// ===============================
-// 3. Mostrare la prossima istruzione
-// ===============================
-function updateInstructionUI(instr) {
-  const text = instr.text;
-  const dist = Math.round(instr.distance);
-
-  const el = document.getElementById("instruction");
-  if (el) {
-    el.textContent = `${text} (${dist} m)`;
-  }
-}
-
-
-
-// ===============================
-// 4. Navigazione reale (GPS + istruzioni)
-// ===============================
-function startNavigation(route, map) {
-  let currentInstructionIndex = 0;
-
+  // GPS reale su smartphone
   if (isMobile()) {
-  navigator.geolocation.watchPosition(pos => {
-    handlePosition(pos);
-  }, err => console.error(err), {
-    enableHighAccuracy: true
-  });
-} else {
-  // SIMULAZIONE SU PC
-  setInterval(() => {
-    const pos = getSimulatedPosition();
-    handlePosition(pos);
-  }, 2000);
+    navigator.geolocation.watchPosition(
+      pos => handlePosition(pos),
+      err => console.error(err),
+      { enableHighAccuracy: true }
+    );
+  } else {
+    // SIMULAZIONE SU PC
+    setInterval(() => {
+      const pos = getSimulatedPosition();
+      handlePosition(pos);
+    }, 2000);
+  }
 }
 
-  function handlePosition(pos) {
+// ===============================
+// GESTIONE POSIZIONE UTENTE
+// ===============================
+function handlePosition(pos) {
   const user = [pos.coords.longitude, pos.coords.latitude];
 
   // Marker utente
-  if (!window.userMarker) {
-    window.userMarker = new maplibregl.Marker({ color: "red" })
+  if (!userMarker) {
+    userMarker = new maplibregl.Marker({ color: "red" })
       .setLngLat(user)
       .addTo(map);
   } else {
-    window.userMarker.setLngLat(user);
+    userMarker.setLngLat(user);
   }
 
-  // Prossima istruzione
+  // Istruzione corrente
   const instr = route.instructions[currentInstructionIndex];
   updateInstructionUI(instr);
 
-  // Distanza dalla svolta
+  // Distanza dalla prossima svolta
   const dist = turf.distance(
     turf.point(user),
     turf.point([instr.point.lon, instr.point.lat]),
@@ -151,34 +125,38 @@ function startNavigation(route, map) {
   }
 }
 
-    const user = [pos.coords.longitude, pos.coords.latitude];
+// ===============================
+// UI ISTRUZIONI
+// ===============================
+function updateInstructionUI(instr) {
+  const box = document.getElementById("instruction");
+  if (!instr) {
+    box.innerText = "Prosegui";
+    return;
+  }
 
-    // Marker utente
-    if (!window.userMarker) {
-      window.userMarker = new maplibregl.Marker({ color: "red" })
-        .setLngLat(user)
-        .addTo(map);
-    } else {
-      window.userMarker.setLngLat(user);
-    }
-
-    // Prossima istruzione
-    const instr = route.instructions[currentInstructionIndex];
-    updateInstructionUI(instr);
-
-    // Distanza dalla svolta
-    const dist = turf.distance(
-      turf.point(user),
-      turf.point([instr.point.lon, instr.point.lat]),
-      { units: "meters" }
-    );
-
-    // Passa alla prossima istruzione
-    if (dist < 30 && currentInstructionIndex < route.instructions.length - 1) {
-      currentInstructionIndex++;
-    }
-
-  }, err => console.error(err), {
-    enableHighAccuracy: true
-  });
+  box.innerText = instr.text || "Prosegui";
 }
+
+// ===============================
+// UI RIEPILOGO
+// ===============================
+function updateSummaryUI(route) {
+  const box = document.getElementById("summary");
+
+  const km = (route.distance / 1000).toFixed(1);
+  const min = Math.round(route.time / 60000);
+
+  const arrival = new Date(Date.now() + route.time);
+  const hh = arrival.getHours().toString().padStart(2, "0");
+  const mm = arrival.getMinutes().toString().padStart(2, "0");
+
+  box.innerText = `${km} km — ${min} min — Arrivo ${hh}:${mm}`;
+}
+
+// ===============================
+// ESPORTIAMO LE FUNZIONI
+// ===============================
+window.calculateRoute = calculateRoute;
+window.startNavigation = startNavigation;
+window.updateSummaryUI = updateSummaryUI;
