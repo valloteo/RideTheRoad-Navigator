@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RideTheRoad Navigator</title>
+
+  <link
+    href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css"
+    rel="stylesheet"
+  />
+  <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+
+  <!-- Turf.js per calcoli GPS -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- Barra superiore -->
+  <div id="top-bar">
+    <input id="search" type="text" placeholder="Cerca destinazione..." />
+    <button id="import-gpx">Carica un GPX per iniziare</button>
+    <input type="file" id="gpx-file" accept=".gpx" style="display:none" />
+  </div>
+
+  <!-- Mappa -->
+  <div id="map"></div>
+
+  <!-- Pannello istruzioni -->
+  <div id="instruction-panel">
+    <div id="instruction">Pronto a partire</div>
+  </div>
+
+  <!-- Barra inferiore riepilogo -->
+  <div id="summary-bar">
+    <div id="summary">-- km — -- min — Arrivo --:--</div>
+    <button id="start-nav">Start Nav</button>
+  </div>
+
+  <!-- Pulsanti mappa -->
+  <div id="map-buttons">
+    <button id="zoom-in">+</button>
+    <button id="zoom-out">−</button>
+    <button id="compass">⭯</button>
+  </div>
+
+  <!-- Script -->
+  <script src="gpx.js"></script>
+  <script src="navigation.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
