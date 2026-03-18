@@ -1,25 +1,21 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RideTheRoad</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RideTheRoad</title>
 
-    <!-- MapLibre -->
-    <link href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+  <link rel="stylesheet" href="style.css" />
 
-    <!-- GPX parser -->
-    <script src="https://unpkg.com/togpx"></script>
-    <script src="https://unpkg.com/@tmcw/togeojson"></script>
-
-    <link rel="stylesheet" href="style.css" />
+  <!-- MapLibre -->
+  <link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
 </head>
 
 <body>
-    <div id="map"></div>
-    <div id="info">Caricamento GPX…</div>
+  <div id="search-bar">🔍 Cerca destinazione...</div>
+  <div id="map"></div>
 
-    <script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
