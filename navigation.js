@@ -21,33 +21,24 @@ let currentInstructionIndex = 0;
 let userMarker = null;
 
 // ===============================
-// SEMPLIFICAZIONE TRACCIA GPX
-// ===============================
-function simplifyGPX(coords, tolerance = 0.0008) {
-  const line = turf.lineString(coords.map(p => [p.lon, p.lat]));
-  const simplified = turf.simplify(line, { tolerance, highQuality: false });
-  return simplified.geometry.coordinates;
-}
-
-// ===============================
 // CALCOLO DEL PERCORSO (GraphHopper)
 // ===============================
-async function calculateRoute(gpxCoords) {
-  if (!gpxCoords || gpxCoords.length === 0) {
-    console.error("Nessuna coordinata GPX trovata");
+async function calculateRoute(gpx) {
+  if (!gpx || !gpx.simplified || gpx.simplified.length === 0) {
+    console.error("Nessuna coordinata GPX valida");
     return null;
   }
 
   const apiKey = "554f1638-d277-4945-94ab-10d6fac55139";
 
-  // Semplifichiamo la traccia (da 2000 punti → ~40)
-  const simplified = simplifyGPX(gpxCoords);
+  // Usiamo SOLO i punti semplificati
+  const points = gpx.simplified.map(p => [p.lon, p.lat]);
 
   const url = `https://graphhopper.com/api/1/route?key=${apiKey}`;
 
   const body = {
     profile: "motorcycle",
-    points: simplified,
+    points: points,
     instructions: true,
     calc_points: true
   };
