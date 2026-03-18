@@ -4,7 +4,7 @@ let gpxCoords = [];
 window.onload = () => {
   map = new maplibregl.Map({
     container: 'map',
-    style: 'https://tiles.stadiamaps.com/styles/osm_bright.json?api_key=LA_TUA_KEY',
+    style: 'https://tiles.stadiamaps.com/styles/osm_bright.json?api_key=7158c125-4c59-4dee-a3c0-f6db67756120,
     center: [12.4964, 41.9028],
     zoom: 12
   });
